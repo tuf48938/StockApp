@@ -1,14 +1,17 @@
 package edu.temple.stockapp;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.util.List;
+import java.util.Random;
 
 public class StockAdapter extends BaseAdapter {
 
@@ -39,6 +42,20 @@ public class StockAdapter extends BaseAdapter {
 
         TextView textView = new TextView(context);
         textView.setText(stock_symbols.get(i));
+        Drawable img = context.getDrawable(getRandom());
+        textView.setGravity(Gravity.CENTER_VERTICAL);
+        textView.setHeight(200);
+        textView.setPadding(100,5,100,5);
+        textView.setTextColor(Color.BLACK);
+        textView.setTypeface(null, Typeface.BOLD_ITALIC);
+        textView.setTextSize(20);
+        textView.setCompoundDrawablesWithIntrinsicBounds(null,null, img,null);
         return textView;
+    }
+
+    public static int getRandom() {
+        int[] array = {R.drawable.ic_trending_up_black_24dp, R.drawable.ic_trending_flat_black_24dp, R.drawable.ic_trending_down_black_24dp};
+        int rnd = new Random().nextInt(array.length);
+        return array[rnd];
     }
 }

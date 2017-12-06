@@ -85,6 +85,7 @@ public class PortfolioFragment extends Fragment {
         mListener = null;
     }
 
+    // Accessory Method to save stocks list to file
     public void saveToFile(Context context) {
         try {
             FileOutputStream fileOutputStream = context.openFileOutput(fileName, Context.MODE_PRIVATE);
@@ -97,7 +98,7 @@ public class PortfolioFragment extends Fragment {
         }
     }
 
-    // Creates an object by reading it from a file
+    // Accessory Method that creates an object by reading it from a file
     public static ArrayList<String> readFromFile(Context context) {
         ArrayList<String> stock_symbols = null;
         try {
@@ -114,17 +115,25 @@ public class PortfolioFragment extends Fragment {
         return stock_symbols;
     }
 
+    // Accessory Method to reset the internal file
+    public void deleteFile () {
+        File dir = getContext().getFilesDir();
+        File file = new File(dir, fileName);
+        file.delete();
+    }
+
     public interface OnFragmentInteractionListener {
         void stockSearch(String stockSymbol);
     }
 
+    // Accessory Method to new stock to the app
     public void newStock(String stock) {
         Log.d("New Stock Added", stock);
-        stock_symbols.add(stock);
+        stock_symbols.add(stock.toUpperCase());
         stockAdapter.notifyDataSetChanged();
         saveToFile(getContext());
-        int totalStoks = readFromFile(getContext()).size();
-        for (int i = 0; i < totalStoks; i++) {
+        int totalStocks = readFromFile(getContext()).size();
+        for (int i = 0; i < totalStocks; i++) {
             Log.d("Reading File. Index " + i, readFromFile(getContext()).get(i));
         }
     }
