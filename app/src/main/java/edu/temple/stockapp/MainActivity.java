@@ -61,14 +61,14 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
     };
 
     @Override
-    public void onStart(){
+    public void onStart() {
         super.onStart();
         Intent serviceIntent = new Intent(this, UpdateStocksService.class);
         bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
-    public void onStop(){
+    public void onStop() {
         super.onStop();
         unbindService(connection);
 
@@ -92,6 +92,7 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
         } else {
             fm.beginTransaction().add(R.id.portfolio_container, portfolioFragment).commit();
         }
+
 //        // Figure out how to read/write array to file
 //        String list[] =
 //                {"Dog", "Cat", "Mouse", "Elephant", "Rat", "Parrot"};
@@ -144,6 +145,14 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        File file = new File(getApplicationContext().getFilesDir(), fileName);
+        ArrayList<String> stocks = readFromFile(getApplicationContext());
+        if (isConnected) {
+            updateStocksService.updateStocks(stocks);
+            Log.d("File exists", "connected");
+        } else {
+            Log.d("File exists", "But not connected");
+        }
         getMenuInflater().inflate(R.menu.menu, menu);
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
@@ -151,6 +160,7 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String searchText) {
+                Log.d("QueryTextSubmit", "HEllo");
                 portfolioFragment.newStock(searchText);
                 return false;
             }
@@ -161,30 +171,32 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
             }
         });
 
+        searchView.setQuery("", false);
+        searchView.clearFocus();
         return super.onCreateOptionsMenu(menu);
     }
 
-    Handler serviceHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            JSONObject responseObject = (JSONObject) msg.obj;
-
-            try {
-                updateViews(responseObject);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return false;
-        }
-    });
-
-    private void updateViews(JSONObject currentStock) throws JSONException {
-        name = currentStock.getString("Name");
-        price = String.valueOf(currentStock.getDouble("LastPrice"));
-        Log.d("Name", name);
-        Log.d("Price", price);
-    }
+//    Handler serviceHandler = new Handler(new Handler.Callback() {
+//        @Override
+//        public boolean handleMessage(Message msg) {
+//            JSONObject responseObject = (JSONObject) msg.obj;
+//
+//            try {
+//                updateViews(responseObject);
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//
+//            return false;
+//        }
+//    });
+//
+//    private void updateViews(JSONObject currentStock) throws JSONException {
+//        name = currentStock.getString("Name");
+//        price = String.valueOf(currentStock.getDouble("LastPrice"));
+//        Log.d("Name", name);
+//        Log.d("Price", price);
+//    }
 
     public void saveToFile(Context context) {
         try {
@@ -209,8 +221,7 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
             fileInputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
         return stock_symbols;
@@ -219,19 +230,37 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
     @Override
     public void stockSearch(String stockSymbol) {
         StockFragment stockFrag;
+        updateViews(stockSymbol);
         Toast.makeText(this, stockSymbol, Toast.LENGTH_SHORT).show();
-        if (isConnected){
-            updateStocksService.getStock(stockSymbol, serviceHandler);
-        }
         if (twopanes) {
             stockFrag = (StockFragment) fm.findFragmentById(R.id.stock_container);
-            stockFrag.updateStockDetails(name,price);
+            stockFrag.updateStockDetails(name, price);
         } else {
             fm.beginTransaction().replace(R.id.portfolio_container, stockFragment).addToBackStack(null).commit();
             fm.executePendingTransactions();
             stockFrag = (StockFragment) fm.findFragmentById(R.id.portfolio_container);
-            stockFrag.updateStockDetails(name,price);
+            stockFrag.updateStockDetails(name, price);
 
         }
+    }
+
+    private void updateViews(String stockSymbol) {
+        Stock currentStock = null;
+        Log.d("UPdateViews list", String.valueOf(updateStocksService.stock_list_data.size()));
+        for (int k = 0; k < updateStocksService.stock_list_data.size(); k++) {
+            Log.d("UPdateViews run" + k, String.valueOf(updateStocksService.stock_list_data.size()));
+
+            String holder = updateStocksService.stock_list_data.get(k).getSymbol();
+            if (stockSymbol.equals(holder)) {
+                Log.d("UPdateViews run" + k, "equals");
+
+                currentStock = updateStocksService.stock_list_data.get(k);
+                name = currentStock.getName();
+                price = currentStock.getPrice();
+            }
+            Log.d("UpdateViews for", updateStocksService.stock_list_data.get(k).getSymbol());
+        }
+
+
     }
 }

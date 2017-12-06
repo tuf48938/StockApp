@@ -58,6 +58,7 @@ public class PortfolioFragment extends Fragment {
             Log.d("File", "Does not exist");
         }
 
+
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -116,7 +117,7 @@ public class PortfolioFragment extends Fragment {
     }
 
     // Accessory Method to reset the internal file
-    public void deleteFile () {
+    public void deleteFile() {
         File dir = getContext().getFilesDir();
         File file = new File(dir, fileName);
         file.delete();
