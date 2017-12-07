@@ -58,7 +58,6 @@ public class PortfolioFragment extends Fragment {
             Log.d("File", "Does not exist");
         }
 
-
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {

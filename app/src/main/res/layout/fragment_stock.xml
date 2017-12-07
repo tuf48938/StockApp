@@ -11,14 +11,34 @@
         android:id="@+id/companyName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TextView" />
+        android:layout_alignStart="@+id/stock_overview"
+        android:layout_below="@+id/stock_overview"
+        android:layout_marginStart="11dp"
+        android:layout_marginTop="13dp"
+        android:text="TextView"
+        android:textSize="18sp" />
 
     <TextView
         android:id="@+id/companyPrice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/companyName"
-        android:layout_marginTop="28dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/companyName"
+        android:layout_marginBottom="179dp"
         android:text="TextView" />
+
+    <TextView
+        android:id="@+id/stock_overview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="34dp"
+        android:layout_marginTop="30dp"
+        android:fontFamily="monospace"
+        android:text="@string/stock_details_label"
+        android:textColor="@android:color/black"
+        android:textSize="24sp"
+        android:textStyle="bold|italic" />
+
 </RelativeLayout>

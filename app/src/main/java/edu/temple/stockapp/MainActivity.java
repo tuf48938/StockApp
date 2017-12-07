@@ -17,6 +17,7 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -45,6 +46,8 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
     UpdateStocksService updateStocksService;
     String name, price;
     public static String fileName = "stock_list";
+    public static String dataFileName = "stock_list_data";
+    SearchView searchView;
 
     ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -92,76 +95,23 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
         } else {
             fm.beginTransaction().add(R.id.portfolio_container, portfolioFragment).commit();
         }
-
-//        // Figure out how to read/write array to file
-//        String list[] =
-//                {"Dog", "Cat", "Mouse", "Elephant", "Rat", "Parrot"};
-//
-//        File file = new File(MainActivity.this.getFilesDir(), "Symbols");
-//
-//        FileOutputStream stream = null;
-//        try {
-//            stream = new FileOutputStream(file);
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//        try {
-//            stream.write(list.toString().getBytes());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } finally {
-//            try {
-//                stream.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        int length = (int) file.length();
-//
-//        byte[] bytes = new byte[length];
-//
-//        FileInputStream in = null;
-//        try {
-//            in = new FileInputStream(file);
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//        try {
-//            in.read(bytes);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } finally {
-//            try {
-//                in.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        String contents = new String(bytes);
-//        Toast.makeText(this, contents.toString(), Toast.LENGTH_SHORT).show();
     }
 
+    // stuff
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        File file = new File(getApplicationContext().getFilesDir(), fileName);
-        ArrayList<String> stocks = readFromFile(getApplicationContext());
-        if (isConnected) {
-            updateStocksService.updateStocks(stocks);
-            Log.d("File exists", "connected");
-        } else {
-            Log.d("File exists", "But not connected");
-        }
+
         getMenuInflater().inflate(R.menu.menu, menu);
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
+        final SearchView searchView = (SearchView) menu.findItem(R.id.search).getActionView();
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        this.searchView = searchView;
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String searchText) {
-                Log.d("QueryTextSubmit", "HEllo");
                 portfolioFragment.newStock(searchText);
+                searchView.setQuery("", false);
+                searchView.clearFocus();
                 return false;
             }
 
@@ -171,8 +121,13 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
             }
         });
 
-        searchView.setQuery("", false);
-        searchView.clearFocus();
+        // Starts the looping service that updates the stock
+        if (isConnected) {
+            updateStocksService.getStocks();
+            Log.d("File exists", "connected");
+        } else {
+            Log.d("File exists", "But not connected");
+        }
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -227,10 +182,46 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
         return stock_symbols;
     }
 
+    // Accessory Method that creates an object by reading it from a file
+    public static String readFromDataFile(Context context) {
+        String stock_data = null;
+        try {
+            FileInputStream fileInputStream = context.openFileInput(dataFileName);
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+            stock_data = (String) objectInputStream.readObject();
+            objectInputStream.close();
+            fileInputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return stock_data;
+    }
     @Override
     public void stockSearch(String stockSymbol) {
+        String placeholder = readFromDataFile(getApplicationContext());
+        JSONArray jsonArr = null;
+        try {
+            jsonArr = new JSONArray(placeholder);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        for(int i = 0; i < jsonArr.length(); i++) {
+            try {
+                JSONObject explrObject = jsonArr.getJSONObject(i);
+                if(explrObject.getString("Symbol").equals(stockSymbol)) {
+                    name = explrObject.getString("Name");
+                    price = explrObject.getString("LastPrice");
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
         StockFragment stockFrag;
-        updateViews(stockSymbol);
+//        updateViews(stockSymbol);
         Toast.makeText(this, stockSymbol, Toast.LENGTH_SHORT).show();
         if (twopanes) {
             stockFrag = (StockFragment) fm.findFragmentById(R.id.stock_container);
@@ -244,23 +235,40 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
         }
     }
 
-    private void updateViews(String stockSymbol) {
-        Stock currentStock = null;
-        Log.d("UPdateViews list", String.valueOf(updateStocksService.stock_list_data.size()));
-        for (int k = 0; k < updateStocksService.stock_list_data.size(); k++) {
-            Log.d("UPdateViews run" + k, String.valueOf(updateStocksService.stock_list_data.size()));
+    Handler serviceHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
 
-            String holder = updateStocksService.stock_list_data.get(k).getSymbol();
-            if (stockSymbol.equals(holder)) {
-                Log.d("UPdateViews run" + k, "equals");
-
-                currentStock = updateStocksService.stock_list_data.get(k);
-                name = currentStock.getName();
-                price = currentStock.getPrice();
+            JSONObject responseObject = (JSONObject) msg.obj;
+            Stock newStock = null;
+            try {
+                newStock = new Stock(responseObject);
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-            Log.d("UpdateViews for", updateStocksService.stock_list_data.get(k).getSymbol());
+            Log.d("Response", newStock.getName());
+
+            return false;
         }
+    });
 
-
-    }
+//    private void updateViews(String stockSymbol) {
+//        Stock currentStock = null;
+//        Log.d("UPdateViews list", String.valueOf(updateStocksService.stock_list_data.size()));
+//        for (int k = 0; k < updateStocksService.stock_list_data.size(); k++) {
+//            Log.d("UPdateViews run" + k, String.valueOf(updateStocksService.stock_list_data.size()));
+//
+//            String holder = updateStocksService.stock_list_data.get(k).getSymbol();
+//            if (stockSymbol.equals(holder)) {
+//                Log.d("UPdateViews run" + k, "equals");
+//
+//                currentStock = updateStocksService.stock_list_data.get(k);
+//                name = currentStock.getName();
+//                price = currentStock.getPrice();
+//            }
+//            Log.d("UpdateViews for", updateStocksService.stock_list_data.get(k).getSymbol());
+//        }
+//
+//
+//    }
 }
