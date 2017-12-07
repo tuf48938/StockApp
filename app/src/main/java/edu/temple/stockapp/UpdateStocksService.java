@@ -175,7 +175,6 @@ public class UpdateStocksService extends Service {
                             String jsonValue = sB.toString();
                             JSONObject stockObject = new JSONObject(jsonValue);
 
-                            //FIX IT 123135235092469
                             stock_list_data_array.put(stockObject);
                             Log.d("Test2", String.valueOf(stock_list_data_array.length()));
 

@@ -109,7 +109,7 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
         if (file.exists()) {
             status.setText(R.string.status_exists);
         } else {
-            status.setText(R.string.status_dne  );
+            status.setText(R.string.status_dne);
         }
 
         getMenuInflater().inflate(R.menu.menu, menu);
