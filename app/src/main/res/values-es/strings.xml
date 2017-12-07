@@ -4,4 +4,6 @@
     <string name="search_title">Buscar</string>
     <string name="status_label">Estado</string>
     <string name="stock_details_label">Descripción de Stock</string>
+    <string name="status_exists">Archivo guardado en el lugar</string>
+    <string name="status_dne">Agregar una nueva acción con el ícono de búsqueda</string>
 </resources>

@@ -1,6 +1,8 @@
 <resources>
-<string name="app_name">Stocks Portfolio</string>
-<string name="search_title">Search</string>
-<string name="status_label">Status</string>
-<string name="stock_details_label">Stock Overview</string>
+    <string name="app_name">Stocks Portfolio</string>
+    <string name="search_title">Search</string>
+    <string name="status_label">Status</string>
+    <string name="stock_details_label">Stock Overview</string>
+    <string name="status_exists">Saved File In Place</string>
+    <string name="status_dne">Add A New Stock With the Search Icon</string>
 </resources>

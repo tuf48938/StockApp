@@ -13,6 +13,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -46,7 +48,6 @@ public class PortfolioFragment extends Fragment {
 
         File file = new File(getContext().getFilesDir(), fileName);
 
-        Log.d("Recreating View", "RecreatingView");
         if (file.exists()) {
             ArrayList<String> stocks = readFromFile(getContext());
             int totalStocks = stocks.size();
@@ -54,10 +55,11 @@ public class PortfolioFragment extends Fragment {
                 stock_symbols.add(stocks.get(i));
             }
             Log.d("File", "Does exist");
+
         } else {
             Log.d("File", "Does not exist");
         }
-
+//        deleteFile();
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {

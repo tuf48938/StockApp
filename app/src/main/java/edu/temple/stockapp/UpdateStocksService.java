@@ -3,11 +3,15 @@ package edu.temple.stockapp;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
+
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -142,19 +146,20 @@ public class UpdateStocksService extends Service {
         }
         return stock_symbols;
     }
+
     public void getStocks() {
         Thread t = new Thread() {
             @Override
             public void run() {
                 while (true) {
                     ArrayList<String> stocks = readFromListFile(getApplicationContext());
-                    Log.d("GetStocks", String.valueOf(stocks.size()));
+//                    Log.d("GetStocks", String.valueOf(stocks.size()));
                     stock_list_data_array = new JSONArray();
                     HttpURLConnection connection = null;
                     BufferedReader reader = null;
                     URL stockQuoteUrl;
                     try {
-                        for(int i = 0; i < stocks.size(); i ++) {
+                        for (int i = 0; i < stocks.size(); i++) {
                             stockQuoteUrl = new URL("http://dev.markitondemand.com/MODApis/Api/v2/Quote/json/?symbol=" + stocks.get(i));
                             connection = (HttpURLConnection) stockQuoteUrl.openConnection();
                             connection.setRequestMethod("GET");
@@ -173,6 +178,28 @@ public class UpdateStocksService extends Service {
                             //FIX IT 123135235092469
                             stock_list_data_array.put(stockObject);
                             Log.d("Test2", String.valueOf(stock_list_data_array.length()));
+
+                            Bitmap stockImage = null;
+                            try {
+                                stockImage = Picasso.with(getApplicationContext()).load("https://finance.google.com/finance/getchart?p=7d&q=" + stocks.get(i)).get();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            FileOutputStream out = null;
+                            try {
+                                out = getApplicationContext().openFileOutput(stocks.get(i) + ".png", Context.MODE_PRIVATE);
+                                stockImage.compress(Bitmap.CompressFormat.PNG, 100, out);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                try {
+                                    if (out != null) {
+                                        out.close();
+                                    }
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
                         }
                         saveToFile(getApplicationContext());
                         String placeholder = readFromFile(getApplicationContext());

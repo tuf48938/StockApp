@@ -7,6 +7,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -16,6 +18,8 @@ import android.view.Menu;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -97,9 +101,16 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
         }
     }
 
-    // stuff
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
+        File file = new File(getApplicationContext().getFilesDir(), fileName);
+        TextView status = MainActivity.this.findViewById(R.id.textView2);
+        if (file.exists()) {
+            status.setText(R.string.status_exists);
+        } else {
+            status.setText(R.string.status_dne  );
+        }
 
         getMenuInflater().inflate(R.menu.menu, menu);
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
@@ -130,28 +141,6 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
         }
         return super.onCreateOptionsMenu(menu);
     }
-
-//    Handler serviceHandler = new Handler(new Handler.Callback() {
-//        @Override
-//        public boolean handleMessage(Message msg) {
-//            JSONObject responseObject = (JSONObject) msg.obj;
-//
-//            try {
-//                updateViews(responseObject);
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//
-//            return false;
-//        }
-//    });
-//
-//    private void updateViews(JSONObject currentStock) throws JSONException {
-//        name = currentStock.getString("Name");
-//        price = String.valueOf(currentStock.getDouble("LastPrice"));
-//        Log.d("Name", name);
-//        Log.d("Price", price);
-//    }
 
     public void saveToFile(Context context) {
         try {
@@ -198,9 +187,12 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
         }
         return stock_data;
     }
+
+    // Interface tied with Portfolio Fragment
     @Override
     public void stockSearch(String stockSymbol) {
         String placeholder = readFromDataFile(getApplicationContext());
+
         JSONArray jsonArr = null;
         try {
             jsonArr = new JSONArray(placeholder);
@@ -208,10 +200,10 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
             e.printStackTrace();
         }
 
-        for(int i = 0; i < jsonArr.length(); i++) {
+        for (int i = 0; i < jsonArr.length(); i++) {
             try {
                 JSONObject explrObject = jsonArr.getJSONObject(i);
-                if(explrObject.getString("Symbol").equals(stockSymbol)) {
+                if (explrObject.getString("Symbol").equals(stockSymbol)) {
                     name = explrObject.getString("Name");
                     price = explrObject.getString("LastPrice");
                 }
@@ -220,55 +212,27 @@ public class MainActivity extends Activity implements PortfolioFragment.OnFragme
             }
         }
 
+        // Creates the image and saves it as variable bm to be passed the stock fragment
+        Bitmap bm = null;
+        try {
+            FileInputStream in = openFileInput(stockSymbol + ".png");
+            bm = BitmapFactory.decodeStream(in);
+            Log.d("Testest", String.valueOf(bm));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
         StockFragment stockFrag;
-//        updateViews(stockSymbol);
         Toast.makeText(this, stockSymbol, Toast.LENGTH_SHORT).show();
         if (twopanes) {
             stockFrag = (StockFragment) fm.findFragmentById(R.id.stock_container);
-            stockFrag.updateStockDetails(name, price);
+            stockFrag.updateStockDetails(name, price, bm);
         } else {
             fm.beginTransaction().replace(R.id.portfolio_container, stockFragment).addToBackStack(null).commit();
             fm.executePendingTransactions();
             stockFrag = (StockFragment) fm.findFragmentById(R.id.portfolio_container);
-            stockFrag.updateStockDetails(name, price);
-
+            stockFrag.updateStockDetails(name, price, bm);
         }
     }
-
-    Handler serviceHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-
-            JSONObject responseObject = (JSONObject) msg.obj;
-            Stock newStock = null;
-            try {
-                newStock = new Stock(responseObject);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            Log.d("Response", newStock.getName());
-
-            return false;
-        }
-    });
-
-//    private void updateViews(String stockSymbol) {
-//        Stock currentStock = null;
-//        Log.d("UPdateViews list", String.valueOf(updateStocksService.stock_list_data.size()));
-//        for (int k = 0; k < updateStocksService.stock_list_data.size(); k++) {
-//            Log.d("UPdateViews run" + k, String.valueOf(updateStocksService.stock_list_data.size()));
-//
-//            String holder = updateStocksService.stock_list_data.get(k).getSymbol();
-//            if (stockSymbol.equals(holder)) {
-//                Log.d("UPdateViews run" + k, "equals");
-//
-//                currentStock = updateStocksService.stock_list_data.get(k);
-//                name = currentStock.getName();
-//                price = currentStock.getPrice();
-//            }
-//            Log.d("UpdateViews for", updateStocksService.stock_list_data.get(k).getSymbol());
-//        }
-//
-//
-//    }
 }
